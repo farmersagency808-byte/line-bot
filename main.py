@@ -7,7 +7,6 @@ app = Flask(__name__)
 
 LINE_CHANNEL_ACCESS_TOKEN = os.environ.get("LINE_CHANNEL_ACCESS_TOKEN", "")
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
-MY_LINE_USER_ID = os.environ.get("MY_LINE_USER_ID", "")
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
@@ -17,23 +16,9 @@ def webhook():
         if event["type"] == "message" and event["message"]["type"] == "text":
             reply_token = event["replyToken"]
             user_message = event["message"]["text"]
-            user_id = event["source"]["userId"]
-            user_name = get_user_profile(user_id)
             ai_response = ask_claude(user_message)
             reply_message(reply_token, ai_response)
-            notify_owner(user_name, user_message)
     return "OK"
-
-def get_user_profile(user_id):
-    headers = {
-        "Authorization": f"Bearer {LINE_CHANNEL_ACCESS_TOKEN}"
-    }
-    res = requests.get(
-        f"https://api.line.me/v2/bot/profile/{user_id}",
-        headers=headers
-    )
-    result = res.json()
-    return result.get("displayName", "不明")
 
 def ask_claude(text):
     headers = {
@@ -66,22 +51,6 @@ def reply_message(reply_token, text):
     }
     requests.post(
         "https://api.line.me/v2/bot/message/reply",
-        headers=headers,
-        json=data
-    )
-
-def notify_owner(user_name, user_message):
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {LINE_CHANNEL_ACCESS_TOKEN}"
-    }
-    text = f"【長門より確認依頼】\n\n送信者：{user_name}\n\n問い合わせ内容：\n{user_message}\n\nご確認をお願いします。"
-    data = {
-        "to": MY_LINE_USER_ID,
-        "messages": [{"type": "text", "text": text}]
-    }
-    requests.post(
-        "https://api.line.me/v2/bot/message/push",
         headers=headers,
         json=data
     )
