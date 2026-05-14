@@ -1,30 +1,15 @@
 import os
-import hashlib
-import hmac
 import json
-from flask import Flask, request, abort
+from flask import Flask, request
 import requests
 
 app = Flask(__name__)
 
-LINE_CHANNEL_SECRET = os.environ.get("LINE_CHANNEL_SECRET", "")
 LINE_CHANNEL_ACCESS_TOKEN = os.environ.get("LINE_CHANNEL_ACCESS_TOKEN", "")
-
-def verify_signature(body, signature):
-    hash = hmac.new(
-        LINE_CHANNEL_SECRET.encode("utf-8"),
-        body,
-        hashlib.sha256
-    ).digest()
-    import base64
-    return base64.b64encode(hash).decode("utf-8") == signature
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
-    signature = request.headers.get("X-Line-Signature", "")
-    body = request.get_data()
-    if not verify_signature(body, signature):
-        abort(400)
+    body = request.get_data(as_text=True)
     events = json.loads(body)["events"]
     for event in events:
         if event["type"] == "message" and event["message"]["type"] == "text":
