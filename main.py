@@ -18,10 +18,22 @@ def webhook():
             reply_token = event["replyToken"]
             user_message = event["message"]["text"]
             user_id = event["source"]["userId"]
+            user_name = get_user_profile(user_id)
             ai_response = ask_claude(user_message)
             reply_message(reply_token, ai_response)
-            notify_owner(user_id, user_message)
+            notify_owner(user_name, user_message)
     return "OK"
+
+def get_user_profile(user_id):
+    headers = {
+        "Authorization": f"Bearer {LINE_CHANNEL_ACCESS_TOKEN}"
+    }
+    res = requests.get(
+        f"https://api.line.me/v2/bot/profile/{user_id}",
+        headers=headers
+    )
+    result = res.json()
+    return result.get("displayName", "不明")
 
 def ask_claude(text):
     headers = {
@@ -58,12 +70,12 @@ def reply_message(reply_token, text):
         json=data
     )
 
-def notify_owner(user_id, user_message):
+def notify_owner(user_name, user_message):
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {LINE_CHANNEL_ACCESS_TOKEN}"
     }
-    text = f"【長門より確認依頼】\n\nユーザーID：{user_id}\n\n問い合わせ内容：\n{user_message}\n\nご確認をお願いします。"
+    text = f"【長門より確認依頼】\n\n送信者：{user_name}\n\n問い合わせ内容：\n{user_message}\n\nご確認をお願いします。"
     data = {
         "to": MY_LINE_USER_ID,
         "messages": [{"type": "text", "text": text}]
