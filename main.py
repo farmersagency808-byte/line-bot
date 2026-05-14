@@ -63,7 +63,7 @@ def notify_owner(user_id, user_message):
         "Content-Type": "application/json",
         "Authorization": f"Bearer {LINE_CHANNEL_ACCESS_TOKEN}"
     }
-    text = f"【長門より確認依頼】\n\n問い合わせ内容：\n{user_message}\n\nご確認をお願いします。"
+    text = f"【長門より確認依頼】\n\nユーザーID：{user_id}\n\n問い合わせ内容：\n{user_message}\n\nご確認をお願いします。"
     data = {
         "to": MY_LINE_USER_ID,
         "messages": [{"type": "text", "text": text}]
