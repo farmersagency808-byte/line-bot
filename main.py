@@ -6,7 +6,7 @@ import requests
 app = Flask(__name__)
 
 LINE_CHANNEL_ACCESS_TOKEN = os.environ.get("LINE_CHANNEL_ACCESS_TOKEN", "")
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
@@ -16,22 +16,29 @@ def webhook():
         if event["type"] == "message" and event["message"]["type"] == "text":
             reply_token = event["replyToken"]
             user_message = event["message"]["text"]
-            ai_response = ask_gemini(user_message)
+            ai_response = ask_claude(user_message)
             reply_message(reply_token, ai_response)
     return "OK"
 
-def ask_gemini(text):
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={GEMINI_API_KEY}"
-    headers = {"Content-Type": "application/json"}
-    data = {
-        "contents": [{"parts": [{"text": text}]}]
+def ask_claude(text):
+    headers = {
+        "Content-Type": "application/json",
+        "x-api-key": ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01"
     }
-    res = requests.post(url, headers=headers, json=data)
+    data = {
+        "model": "claude-haiku-4-5-20251001",
+        "max_tokens": 1024,
+        "system": "あなたは野菜の仕入れ代理店のアシスタントです。農家さんからの在庫確認や発注に丁寧な日本語で対応してください。",
+        "messages": [{"role": "user", "content": text}]
+    }
+    res = requests.post(
+        "https://api.anthropic.com/v1/messages",
+        headers=headers,
+        json=data
+    )
     result = res.json()
-    try:
-        return result["candidates"][0]["content"]["parts"][0]["text"]
-    except (KeyError, IndexError):
-        return f"エラー: {result.get('error', {}).get('message', '不明なエラー')}"
+    return result["content"][0]["text"]
 
 def reply_message(reply_token, text):
     headers = {
