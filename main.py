@@ -1,5 +1,6 @@
 import os
 import json
+import time
 from flask import Flask, request
 import requests
 
@@ -17,6 +18,7 @@ def webhook():
             reply_token = event["replyToken"]
             user_message = event["message"]["text"]
             ai_response = ask_claude(user_message)
+            time.sleep(60)
             reply_message(reply_token, ai_response)
     return "OK"
 
