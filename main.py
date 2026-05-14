@@ -28,7 +28,10 @@ def ask_gemini(text):
     }
     res = requests.post(url, headers=headers, json=data)
     result = res.json()
-    return result["candidates"][0]["content"]["parts"][0]["text"]
+    try:
+        return result["candidates"][0]["content"]["parts"][0]["text"]
+    except (KeyError, IndexError):
+        return f"エラー: {result.get('error', {}).get('message', '不明なエラー')}"
 
 def reply_message(reply_token, text):
     headers = {
